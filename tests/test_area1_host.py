@@ -23,7 +23,7 @@ from pathlib import Path
 
 import yaml
 
-from _support import MM_ROOT, REPO, RUNTIME, TIERB_ROOT
+from _support import MM_ROOT, REPO, RUNTIME, TIERB_ROOT, run_user
 
 AREA = MM_ROOT / "area1-trl"
 TREE = MM_ROOT / "python" / "cpython-3.12.16-linux-x86_64-gnu"
@@ -58,7 +58,7 @@ def real_request(out: Path) -> dict:
     return {"area": 1, "label": "mm-a1-trl-smoke", "host_work": str(TIERB_ROOT),
             "runtime": {"kind": "container", "image": "sha256:" + "0e" * 32},
             "framework": {"name": "trl", "version": "1.16.0", "commit": None}, "training_seed": 42, "gpus": True,
-            "network": "none", "network_reason": None, "user": "1000:1000",
+            "network": "none", "network_reason": None, "user": run_user(),
             "env": {"HF_HOME": "/tmp/hf", "HF_HUB_OFFLINE": "1"},
             "mounts": [{"host": AREA1_ROOTS[0], "container": AREA1_ROOTS[0], "mode": "ro"},
                        {"host": AREA1_ROOTS[1], "container": AREA1_ROOTS[1], "mode": "ro"},

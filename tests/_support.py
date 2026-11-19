@@ -14,7 +14,9 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import pwd
 import sys
+import unittest
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +30,17 @@ RUNTIME = REPO / "runtime"
 PKG_DIR = REPO / "src" / "gatedtrain_recipe_trl_grpo_gsm8k"
 VENV_PYTHON = Path(sys.executable)                    # the interpreter running the tests (gatedtrain and this plugin)
 REQUIRED_TAGS = ("prototype", "unpromotable", "registration: unsigned")
+
+
+def run_user() -> str:
+    """The container's `<uid>:<gid>` in fixture requests and records: the uid running the tests and its primary group,
+    so the output directories the tests create are owned by the container's uid (EXT-63) whoever runs them. The launch
+    rules refuse root, so a test that needs it skips under uid 0."""
+    uid = os.getuid()
+    if uid == 0:
+        raise unittest.SkipTest("the launch rules refuse a container running as root (uid 0); run the tests as a "
+                                "non-root user")
+    return f"{uid}:{pwd.getpwuid(uid).pw_gid}"
 
 
 def env_dir(var: str) -> Path:

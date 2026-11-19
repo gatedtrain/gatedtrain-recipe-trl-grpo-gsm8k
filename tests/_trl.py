@@ -45,7 +45,7 @@ from gatedtrain.ext.arm import META_SCHEMA
 from gatedtrain.ext.launch import RECORD_SCHEMA
 from gatedtrain.ext.smoke import SMOKE_SCHEMA
 
-from _support import FIXTURES, canonical_bytes, file_sha256, manifest_entries, manifest_hash, run_cli
+from _support import FIXTURES, canonical_bytes, file_sha256, manifest_entries, manifest_hash, run_cli, run_user
 
 EXT = FIXTURES
 GSM8K_SOURCE = FIXTURES / "gsm8k-source"            # synthetic GSM8K-shaped rows (gatedtrain's Tier B fixture source)
@@ -488,7 +488,7 @@ def launch_record(*, host_work: Path, stage_out: Path, base: Path, train: Path, 
                       {"host": str(code), "container": CODE_CONTAINER, "mode": "ro"},
                       {"host": str(stage_out), "container": "/out", "mode": "rw"}],
            "tmpfs": ["/tmp"], "network": "none", "network_reason": None,
-           "user": "1000:1000", "env_names": ["HF_HOME", "HF_HUB_OFFLINE"], "gpu_est_h": 2.5,
+           "user": run_user(), "env_names": ["HF_HOME", "HF_HUB_OFFLINE"], "gpu_est_h": 2.5,
            "gpu_used_h": 3.12, "output_dir": str(stage_out), "output_root": str(out_root),
            "gpu_step_sha256": file_sha256(script) if script.is_file() else None,
            "allow_network": False, "interpreter_path": INTERPRETER_CONTAINER,
