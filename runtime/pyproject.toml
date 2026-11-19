@@ -1,0 +1,33 @@
+# TRL GRPO on Qwen3-0.6B / GSM8K, the runtime of the recipe gatedtrain-recipe-trl-grpo-gsm8k (prototype, unpromotable).
+# Runtime kind `venv_in_container` (gatedtrain MULTIMODAL-SPEC MM-32): this lock builds a host venv that is
+# mounted read-only into a pinned CUDA base image. See README.md.
+#
+# Version rule: latest stable release at least two weeks old on 2026-11-11, compatible together.
+#   trl 1.16.0 (2026-10-15) pins vllm<=0.31.0 in its `vllm` extra; vllm 0.31.0 (2026-10-05) pins
+#   torch==2.13.0 and transformers>=5.10.4,<5.18.0, hence transformers 5.17.0 (2026-09-09).
+#   math-verify 0.9.0 is the version NeMo RL 4f39fd8 locks (uv.lock:3104-3105), so the reward
+#   function is the same code as the Tier B training reward.
+[project]
+name = "gatedtrain-recipe-trl-grpo-gsm8k-runtime"
+version = "0.1.0"
+license = "Apache-2.0"
+requires-python = "==3.12.*"
+dependencies = [
+    "trl==1.16.0",
+    "transformers==5.17.0",
+    "vllm==0.31.0",
+    "torch==2.13.0",
+    "accelerate==1.15.0",
+    "datasets==5.1.0",
+    "math-verify==0.9.0",
+    # Same ANTLR runtime as NeMo RL 4f39fd8 (uv.lock:444-445), so math-verify's LaTeX parsing of the
+    # `\boxed{gt}` gold answer runs the same generated parser as the Tier B training reward.
+    "antlr4-python3-runtime==4.9.3",
+]
+
+[tool.uv]
+package = false
+# Linux x86_64 only.
+environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
+# Every transitive dependency resolves to a release at least two weeks old.
+exclude-newer = "2026-10-28T00:00:00Z"

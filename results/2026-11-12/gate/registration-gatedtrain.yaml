@@ -1,0 +1,74 @@
+# Amendment for the rename to gatedtrain 0.3.0 (05 section 3.7, R17-1); it amends registration-ptc-hub.yaml.
+# Area 1 pre-registration: TRL GRPO on Qwen3-0.6B, GSM8K (05 section 3.7; MULTIMODAL-SPEC section 6 row 1).
+# prototype, unpromotable. Unsigned: no named team has signed it.
+#
+# Written before the area-1 full run (`created_at` below precedes the full run's first START in gpu-guard.log),
+# so no candidate-arm result of the judged checkpoint (full-1/checkpoint-150) exists when it is written.
+# Values reused from the Tier B registration v2 (tierb/registration.yaml, sha256:92b02dc1...): clause numbers,
+# K = 4, eval_seeds, sampler, bootstrap, pairing, margin and planning effect placeholders (sigma: the Tier B pilot), so the area-1 gate is the
+# Tier B gate on another trainer. Differences forced by the code: the evaluator is the item-level
+# gsm8k.nemo_evaluator_items@0.1 (metric `accuracy`, numeric_match fixed by the registry row, so no `scorer`
+# key), its manifest_hash is resolved, and the item set is `eval_distribution.item_set_hash` (the manifest hash of
+# items/, built from export/heldout/prompts.jsonl, item = problem_idx as a string).
+# Any later change is an amendment: a new registration with `amends` and a new hash in spec.yaml (05:166).
+registration_version: 1
+registration_id: mm-a1-trl-gsm8k-superiority-v1
+signed_by: prototype-unsigned
+workflow: mm-a1-trl-gsm8k
+gate: quality_gate
+created_at: "2026-11-18T06:10:15Z"
+amends: "sha256:4bbe7f09e3145f2431d120cea29c366b4190a6eee34dfe602bd2bcca25431065"
+clause:
+  type: superiority
+  metric: accuracy
+  direction: higher_is_better
+  margin: 0.0                 # internal_pilot placeholder: delta_sup = 0 (05 section 3.1, "usually 0"), as Tier B
+  alpha: 0.025
+  power: 0.8
+  planning_effect: 0.03       # internal_pilot placeholder: a 3-point gain, as Tier B
+  sigma_plan: fixed           # pilot estimate from Tier B's long-run gate; see sigma_pilot
+  unit: item
+  samples_per_item: 4
+  eval_seeds: [11, 12, 13, 14]
+  interval: cluster_bootstrap
+  blocking: true
+margin_justification: >-
+  internal_pilot placeholder (MULTIMODAL-SPEC section 6: superiority, margin 0). Superiority with
+  delta_sup = 0: any held-out GSM8K gain counts. Prototype value, not reviewed by a named team.
+sigma_pilot:
+  sigma: 0.3177               # SD of per-item paired differences (K = 4) observed in Tier B's long-run gate
+  source: >-
+    Pilot estimate: sd_diff 0.317747 of Tier B's long-run gate (run-20261111T110313Z-7adda9b9; same base
+    model, evaluator, scorer, items, seeds and sampler; NeMo RL GRPO candidate step_150), replacing the
+    Tier B placeholder 0.25 before the area-1 full run (decided 2026-11-12). With sigma
+    0.3177 and a 0.03 planning effect, n_required = ceil((2.8016 x 0.3177 / 0.03)^2) = 881 of the 1,319
+    test items.
+baseline_pilot_mean: 0.544162   # Tier B long-run baseline, same base model, evaluator, scorer, items, seeds and sampler (gate_report baseline_score)
+eval_distribution:
+  item_set_hash: "sha256:4aedafccacbc0bd9b686711822d82f808e0b5f3a8f72148554c348c4e3240cba"
+  env_version: null
+  env_params_version: null
+sampler:
+  name: deployment
+  temperature: 0.7
+  top_p: 1.0
+  max_new_tokens: 1024
+  enable_thinking: false      # G-15: thinking off in training and evaluation
+evaluators:
+  - id: gsm8k.nemo_evaluator_items@0.1
+    # EXT-6: SHA-256 of the canonical JSON {evaluator, metric, direction, scorer}; the scorer is numeric_match at
+    # nemo-evaluator ea35ba3, code_sha256 sha256:594c235c... = scoring/pattern.py in tierb's nemo-evaluator clone.
+    manifest_hash: "sha256:13348851a99d11833edc456c69371b8ec8294bdcf2646737d44288788fcedf15"
+multiplicity:
+  plan: single_gate
+  family: null
+analysis_code_version: gatedtrain 0.3.0
+bootstrap:
+  replicates: 10000
+  seed: 20261109
+pairing:
+  max_unpaired: 0             # G-18: every (item, repeat) must be in both arms
+min_paired: 10                # MULTIMODAL-SPEC section 6: min_paired >= 10 (05 section 3.6 default)
+contamination:
+  allow_exact_overlap: false  # MM-11: an exact question overlap with the training shards refuses
+post_hoc: false

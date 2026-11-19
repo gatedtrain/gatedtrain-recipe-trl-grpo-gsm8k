@@ -1,0 +1,4 @@
+# External-run trainer config (test fixture; tests/README.md section 11.18, EXT-2).
+# Names the adapter and the launch profile; ext-collect checks the profile against the launch record.
+backend: trl_grpo
+profile: full

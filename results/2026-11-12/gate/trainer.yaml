@@ -1,0 +1,4 @@
+# Area 1 (TRL GRPO) trainer config for ext-collect (tests/README.md section 11.18, EXT-2): the adapter and the
+# launch profile. ext-collect checks the profile against the launch record. prototype, unpromotable.
+backend: trl_grpo
+profile: full

@@ -1,0 +1,49 @@
+# External-run adapter fixture registration (prototype, unpromotable).
+# gatedtrain tests/README.md section 11.18. Rendered by tests/_trl.py: {item_set_hash} is the manifest hash of the
+# fixture item set, {evaluator_hash} the identity hash of gsm8k.nemo_evaluator_items@0.1 (EXT-6).
+# The clause numbers, seeds and bootstrap equal the Tier B fixture registration
+# (gatedtrain tests/fixtures/tierb/registration.template.yaml), so the Tier B equivalence test (EXT-9) compares like
+# with like.
+registration_version: 1
+registration_id: ext-trl-fixture-superiority-v1
+signed_by: prototype-unsigned
+workflow: ext-trl-fixture
+gate: quality_gate
+clause:
+  type: superiority
+  metric: accuracy
+  direction: higher_is_better
+  margin: 0.0
+  alpha: 0.025
+  power: 0.8
+  planning_effect: 0.30
+  sigma_plan: fixed
+  unit: item
+  samples_per_item: 2
+  eval_seeds: [11, 12]
+  interval: cluster_bootstrap
+  blocking: true
+margin_justification: Fixture value (superiority, delta_sup = 0).
+sigma_pilot:
+  sigma: 0.30
+  source: Fixture value; n_required = ceil((2.8016 * 0.30 / 0.30)^2) = 8 <= 30 items.
+eval_distribution:
+  item_set_hash: "{item_set_hash}"
+sampler:
+  name: deployment
+  temperature: 0.7
+  top_p: 1.0
+  max_new_tokens: 1024
+  enable_thinking: false
+evaluators:
+  - id: gsm8k.nemo_evaluator_items@0.1
+    manifest_hash: "{evaluator_hash}"
+multiplicity:
+  plan: single_gate
+  family: null
+analysis_code_version: gatedtrain 0.3.0
+bootstrap:
+  replicates: 10000
+  seed: 20261109
+pairing:
+  max_unpaired: 0
