@@ -1,22 +1,47 @@
 # gatedtrain recipe: TRL GRPO on GSM8K
 
-A [gatedtrain](https://github.com/gatedtrain/gatedtrain) recipe: TRL's `GRPOTrainer` (trl 1.16.0, vLLM colocated) trains Qwen3-0.6B on
-the GSM8K training split with a math-verify reward, one GPU, and gatedtrain gates the trained checkpoint against the base on
-the 1,319 GSM8K test questions (NeMo Evaluator, `numeric_match`, 4 seeds). The hyperparameters match gatedtrain's Tier B
-NeMo RL recipe where TRL has an equivalent, so the two trainers can be compared on one gate. Prototype.
+This recipe teaches a small language model grade-school math, and lets
+[gatedtrain](https://github.com/gatedtrain/gatedtrain) decide whether the trained model really is better than the one it
+started from. TRL's `GRPOTrainer` (trl 1.16.0, vLLM colocated) trains Qwen3-0.6B on the GSM8K training split with a
+math-verify reward, on one GPU. gatedtrain then gates the trained checkpoint against the base model on the 1,319 GSM8K
+test questions (NeMo Evaluator, `numeric_match`, 4 seeds), by a rule registered before training.
 
-Code comments, tests, `RESULT.md` and the gate files under `results/` cite records of the framework's development:
-its review rounds ("review round 4", "review round 5"), ids of its internal issue lists (`G-14`, `G-20`) and the
-maintainers' decisions. Those records are not published.
+A recipe is a ready-made external run for gatedtrain: the training code with its locked environment, plus an
+*adapter*, the small plugin through which gatedtrain reads the run's outputs. gatedtrain does not start the training;
+you run it. The hyperparameters match gatedtrain's Tier B NeMo RL recipe where TRL has an equivalent, so the two
+trainers can be compared on one gate.
 
-## Layout
+This is a prototype: the result below is one registered run, not a benchmark claim.
 
-| Path | What |
+## How it works
+
+```mermaid
+flowchart LR
+    fetch["fetch_inputs.sh:<br/>Qwen3-0.6B and GSM8K, pinned"] --> train["train_grpo.py in a container<br/>(TRL GRPO, one GPU)"]
+    train --> cuts["Checkpoints and<br/>consumption logs"]
+    cuts --> eval["NeMo Evaluator: base and trained model<br/>on the 1,319 test questions"]
+    eval --> arms["Arm files: per-question results"]
+    arms --> collect["gatedtrain ext-collect"]
+    cuts -->|"read through the adapter trl_grpo"| collect
+    collect --> gate{"Gate"}
+    gate --> report["Gate report, consumption ledger"]
+```
+
+`gatedtrain ext-launch` checks the run request and prints the container command; you run it. The steps, flags and
+arm files are explained in gatedtrain's [External runs](https://gatedtrain.github.io/gatedtrain/external-runs/) guide.
+
+## Result
+
+One registered run, 150 GRPO steps on one GPU, 0.83 GPU-hours:
+
+| | Accuracy on the 1,319 test questions |
 |---|---|
-| `src/gatedtrain_recipe_trl_grpo_gsm8k/` | the gatedtrain adapter `trl_grpo` (`adapter.py`) and its registry rows (`rows.py`), registered through the `gatedtrain.adapters` entry point |
-| `runtime/` | what runs in the container: `train_grpo.py`, its own `pyproject.toml` and `uv.lock`, and `fetch_inputs.sh`, which fetches the base model and writes the GSM8K export |
-| `tests/` | the adapter's tests on fixture runs (no GPU, no TRL needed), tests of the original run's records and inputs (skipped without them) and gatedtrain's conformance check |
-| `results/2026-11-12/` | the gate files of the published result (host paths redacted, see `RESULT.md`) |
+| Base (Qwen3-0.6B) | 0.544 |
+| Trained (`checkpoint-150`) | 0.730 |
+| Gate | **PASS**: +0.185, 95% interval [0.167, 0.203] |
+
+`RESULT.md` has the full record: the registration, power, overlap with training, the impact query and the
+re-collection with this repository's adapter. The gate files are under `results/2026-11-12/`.
 
 ## Setup
 
@@ -35,6 +60,15 @@ package and needs `GATEDTRAIN_RECIPE_TRL_GRPO_GSM8K_RUNTIME` set to the checkout
 `runtime/README.md` has the pins, mounts, command shape, profiles, the reward's equivalence with NeMo RL's and the TRL
 facts the adapter relies on.
 
+## Layout
+
+| Path | What |
+|---|---|
+| `src/gatedtrain_recipe_trl_grpo_gsm8k/` | the gatedtrain adapter `trl_grpo` (`adapter.py`) and its registry rows (`rows.py`), registered through the `gatedtrain.adapters` entry point |
+| `runtime/` | what runs in the container: `train_grpo.py`, its own `pyproject.toml` and `uv.lock`, and `fetch_inputs.sh`, which fetches the base model and writes the GSM8K export |
+| `tests/` | the adapter's tests on fixture runs (no GPU, no TRL needed), tests of the original run's records and inputs (skipped without them) and gatedtrain's conformance check |
+| `results/2026-11-12/` | the gate files of the published result (host paths redacted, see `RESULT.md`) |
+
 ## Tests
 
 ```bash
@@ -48,9 +82,9 @@ and `records/area1-trl/`) together with `GATEDTRAIN_TEST_TIERB_ROOT` (its Tier B
 need torch (gatedtrain's `tier-a` extra: `gatedtrain run`, and the Tier A stand-in evaluator that
 `gatedtrain.registration.resolved_evaluator_hash` imports) and skip without it; the recipe itself does not need torch.
 
-## Result
-
-See `RESULT.md`.
+Code comments, tests, `RESULT.md` and the gate files under `results/` cite records of the framework's development:
+its review rounds ("review round 4", "review round 5"), ids of its internal issue lists (`G-14`, `G-20`) and the
+maintainers' decisions. Those records are not published.
 
 ## Data and licenses
 
